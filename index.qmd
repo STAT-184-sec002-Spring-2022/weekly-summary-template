@@ -1,32 +1,123 @@
 ---
 title: "Weekly Summary Template"
-author: "Author Name"
+author: "Miranda Goodman"
 title-block-banner: true
 title-block-style: default
 toc: true
-format: html
-# format: pdf
+#format: html
+format: pdf
 ---
 
 ---
 
-## Tuesday, Jan 17
+## Tuesday, Feb 7
 
 ::: {.callout-important}
 ## TIL
+
 
 Include a _very brief_ summary of what you learnt in this class here. 
 
 Today, I learnt the following concepts in class:
 
-1. Item 1
-1. Item 2
-1. Item 3
+1. Interpretation of regression coeficients
+1. Categorical Covariates
+1. How to change the baselines for a model
 :::
 
 Provide more concrete details here. You can also use footenotes[^footnote] if you like
 
-```{R results='hide'}
+In class we learned about how to interpret regression coeficients. This meant how to interpret $\beta_0$ and $\beta_1$.
+
+Given this regression model:
+$$
+y_i = \beta_0 + \beta_1 x_i + \epsilon_i
+$$
+$y_i$ is the response variable
+$x_i$ is the covariate
+$\epsilon_i$ is the error
+$\beta_0$ and $\beta_1$ are the regression coefficients
+$\beta_0$ is the intercept and $\beta_1$ is the slope
+
+
+Example:
+For some covariate $x_0$ the expected value for $y(x_0)$ is given by the equation $y(x_0) = \beta_0 + \beta_1 x_0$
+
+The expected value of $x_0 + 1$ is given by:
+
+$$
+\begin{align}
+y(x_0 +1) &= \beta_0 + \beta_1 \times (x_0 + 1)\\
+&= \beta_0 + \beta_1 x_0 + \beta_1\\
+\end{align}
+$$
+In class we learned about categorical covariates and regression models:
+
+In classs we used the example of the iris data set.
+```
+iris %>% head() %>% kable()
+```
+We looked at if there is a relationship between 'species' and 'sepal.length'.
+
+EDA:
+
+```
+y <- iris$Sepal.Length
+x <- iris$Species
+
+boxplot(Sepal.Length ~ SPecies, df)
+```
+
+Linear Regression Model:
+
+```
+reg_model <- lm(Sepal.Length ~ Species, iris)
+reg_model
+```
+
+Regression model:
+
+$$
+y_i = \beta_0 + \beta_1 x_i
+$$
+
+where $x_i \in \{ \setosa, \versicolor, \virginica)$} We get the following models:
+
+$y_i = \beta_0 + \beta_1 x_i = $ 'setosa'
+$y_i = \beta_0 + \beta_1 x_i = $ 'versicolor'
+$y_i = \beta_0 + \beta_1 x_i = $ 'virginica'
+
+Interpretation:
+
+###Intercept
+
+$\beta_0$ is the expected $y$ value when $x$ belongs to the base category.
+
+####Slopes
+$\beta_1$ with the name 'Species.versicolor' represents the following
+
+'(Intercept)' = $y(x = \texttt{setosa})$
+
+'Species.versicolor = $y(x = \texttt{versicolor}) - y(x = \texttt{setosa})$
+'Species.verginica = $y(x = \texttt{verginica}) - y(x = \texttt{setosa})$
+
+In class we learned how to change the baselines for a model:
+To change the baseline to virginica:
+```
+iris$Species
+iris$Species <- relevel(iris$Species, "virginica")
+iris$SPecies
+```
+
+Now we can run the regression model:
+
+```
+new_reg_model <- lm(Sepal.Length ~ Species, iris)
+new_reg_model
+```
+
+
+```
 #| output: false
 library(dplyr)
 library(purrr)
@@ -37,14 +128,14 @@ For example:
 in class we learnt we learnt about the `map` function from the `purrr` package. 
 
 
-```{R results='hide', fig.width=7, fig.height=7}
+``` results='hide', fig.width=7, fig.height=7}
 par(mfrow=c(3, 3), mar=c(3.5, 3.5, 2, 1), mgp=c(2.4, 0.8, 0))
 map(1:9, function(i)rnorm(1000) %>% hist(., main=i, col=i))
 ```
 
 
 
-## Thursday, Jan 19
+## Thursday, Feb 9
 
 
 
@@ -55,16 +146,88 @@ Include a _very brief_ summary of what you learnt in this class here.
 
 Today, I learnt the following concepts in class:
 
-1. Item 1
-1. Item 2
-1. Item 3
+1. Multiple Regression
+1. How to apply multiple regression to a data set
+1. How to interpret the coefficients
 :::
 
 Provide more concrete details here, e.g., 
 
+In class we learned about multiple regression.
+$$
+y - \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \dots \beta_p x_p + \epsilon
+$$
+where in the data $y_1, y_2 \dots y_n$ is the response variable and $x_1, x_2, \dots x_n$ is the covariates.
+
+The model:
+
+$$
+y_i = \beta_0 + \beta_1 x_{1,i} + \beta_2 x_{2,i} + \dots + \beta_p x_{p, i} + \epsilon_i
+$$
+
+
+Applying multiple regression to a credit data set:
+
+```
+library(ISLR2)
+attatch(credit)
+
+df <- Credit %>% tibble()
+colnames(df) <- tolower(colnames(df))
+df
+```
+Looking at income, rating, limit
+
+```
+df3 <- df %>% select(c("income", "rating", "limit"))
+df3
+```
+
+```
+fig <- plot_ly(df3, x=~income, y =~rating, z=~limit)
+fig %>% add_markers()
+```
+
+```
+model <- lm(limit ~ income + rating, df3)
+model
+```
+
+```
+ranges <- df3 %>%
+  select(income, rating) %>%
+  colnames() %>%
+  map(\(x) seq(0.1 * min(df3[x]), 1.1 * max(df3[x]), length.out = 50))
+
+b <- model$coefficients
+z <- outer(
+  ranges[[1]],
+  ranges[[2]],
+  Vectorize(function(x2, x3) {
+    b[1] + b[2] * x2 + b[3] * x[3]
+  })
+)
+
+fig %>%
+  add_surface(x = ranges[[1]], y = ranges[[2]], z = t(z),
+              alpha=.3) %>%
+  add_markers()
+```
+
+
+We also learned how to interpret the coefficients:
+
+
+$\beta_0$ is the expected value of $y$ when $income = 0$ and $rating = 0$
+$beta_1$ is saying that if $rating$ is held constant and $income$ changed by 1 unit, then the corresponding change in the 'limit' is $0.5573$
+$\beta_2$ is saying that if 'income' is held constant and 'rating' changes by $1$ unit, then the corresponding change in 'limit' is $14.771$
+
+
+
+
 In class we learnt how to use the `map` function to create multiple regression diagnostic plots
 
-```{R results='hide', fig.height=4}
+```
 par(mfcol=c(2, 3), mar=c(3.5, 3.5, 2, 1), mgp=c(2.4, 0.8, 0))
 mtcars %>%
   split(.$cyl) %>%
